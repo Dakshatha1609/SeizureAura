@@ -5,7 +5,7 @@ import sys
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from model.predict import run_model 
+from models.predict import run_model
 
 load_dotenv()
 print(" GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
