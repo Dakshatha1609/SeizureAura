@@ -5,12 +5,12 @@ import sys
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from models.predict import run_model
+from models.predict import run_model  # ✅ FIXED this line
 
 load_dotenv()
 print(" GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './models')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './model')))
 from llm import get_chatgroq_model
 from embeddings import get_vectorstore_from_local
 
