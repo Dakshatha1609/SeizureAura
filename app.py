@@ -5,6 +5,7 @@ import sys
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from model.predict import run_model 
 
 load_dotenv()
 print(" GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
@@ -28,8 +29,6 @@ else:
     use_rag = False
     use_web = False
 
-
-
 if page == "Seizure Risk Prediction":
     uploaded_file = st.file_uploader(" Upload EEG File (CSV)", type=["csv"])
     if uploaded_file:
@@ -41,50 +40,43 @@ if page == "Seizure Risk Prediction":
             st.error(f" File Error: {e}")
 
         if st.button(" Predict Seizure Risk"):
-            with st.spinner("Predicting from backend model..."):
+            with st.spinner("Predicting from model..."):
                 try:
-                    response = requests.post(
-                        "http://127.0.0.1:8000/predict/",
-                        files={"file": (uploaded_file.name, uploaded_file.getvalue(), "text/csv")}
-                    )
-                    if response.status_code == 200:
-                        res = response.json()
-                        if "result" not in res:
-                            st.error("Backend did not return 'result'.")
-                        else:
-                            st.success(f" Prediction: **{res['result']}**")
-                            st.write(f" Probability: `{res['probability']:.2f}`")
-                            if use_rag:
-                                st.subheader(" Explanation from Local Knowledge")
-                                prompt = f"What does '{res['result']}' mean for an epilepsy patient? Give 2 suggestions."
-                                explanation = answer_from_local_knowledge(prompt)
-                            else:
-                                model = get_chatgroq_model()
-                                prompt = f"Explain what '{res['result']}' means for an epilepsy patient in simple terms. Add 2 lifestyle suggestions."
-                                explanation = model.invoke([
-                                    SystemMessage(content="You are a helpful medical assistant."),
-                                    HumanMessage(content=prompt)
-                                ]).content
-                            st.subheader(" AI Explanation")
-                            st.info(explanation)
+                    res = run_model(uploaded_file)
+                    if "result" not in res:
+                        st.error("Model did not return 'result'.")
                     else:
-                        st.error(" Backend failed to respond correctly.")
+                        st.success(f" Prediction: **{res['result']}**")
+                        st.write(f" Probability: `{res['probability']:.2f}`")
+
+                        if use_rag:
+                            st.subheader(" Explanation from Local Knowledge")
+                            prompt = f"What does '{res['result']}' mean for an epilepsy patient? Give 2 suggestions."
+                            explanation = answer_from_local_knowledge(prompt)
+                        else:
+                            model = get_chatgroq_model()
+                            prompt = f"Explain what '{res['result']}' means for an epilepsy patient in simple terms. Add 2 lifestyle suggestions."
+                            explanation = model.invoke([
+                                SystemMessage(content="You are a helpful medical assistant."),
+                                HumanMessage(content=prompt)
+                            ]).content
+
+                        st.subheader(" AI Explanation")
+                        st.info(explanation)
                 except Exception as e:
-                    st.error(f" Backend Error: {e}")
+                    st.error(f" Prediction Error: {e}")
 else:
     st.subheader(" Ask About Seizures or Symptoms")
     model = get_chatgroq_model()
     try:
-       vectorstore = get_vectorstore_from_local()
+        vectorstore = get_vectorstore_from_local()
     except Exception as e:
         st.warning(f" Could not load knowledge base: {e}")
         vectorstore = None
 
-
     st.session_state.messages = [
-    {"role": "assistant", "content": "Hi! I'm your AI assistant. You can ask anything about seizures, aura stages, or symptoms."}
-]
-
+        {"role": "assistant", "content": "Hi! I'm your AI assistant. You can ask anything about seizures, aura stages, or symptoms."}
+    ]
 
     mode = st.radio(" Response Mode", ["Concise", "Detailed"], horizontal=True)
 
@@ -117,11 +109,11 @@ else:
                         context = web_context if web_context else "No reliable web data found."
 
                     formatted_prompt = (
-    f"You are a medically aware health chatbot for epilepsy patients. "
-    f"Below is a user question followed by context from medical knowledge.\n\n"
-    f"User Question: {prompt}\n\n"
-    f"Relevant Context:\n{context}\n\n"
-)
+                        f"You are a medically aware health chatbot for epilepsy patients. "
+                        f"Below is a user question followed by context from medical knowledge.\n\n"
+                        f"User Question: {prompt}\n\n"
+                        f"Relevant Context:\n{context}\n\n"
+                    )
 
                     if mode == "Concise":
                         formatted_prompt += "Please respond concisely in 2-3 lines."
