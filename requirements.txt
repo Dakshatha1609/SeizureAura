@@ -1,25 +1,12 @@
-# UI and API Frameworks
 streamlit
-fastapi
-uvicorn
-
-# Core Python Libraries
 requests
 pandas
-numpy
-
-# ML/AI Libraries
-tensorflow
-openai
-tiktoken
-
-# Web and Env
-beautifulsoup4
 python-dotenv
-
-# Vector DB
-chromadb
-
-# LangChain and Groq only
-langchain==0.1.14
-langchain-groq==0.1.4
+langchain
+langchain-core
+langchain-community
+sentence-transformers
+huggingface_hub
+faiss-cpu
+tqdm
+tensorflow==2.13.0
