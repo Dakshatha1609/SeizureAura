@@ -10,3 +10,4 @@ huggingface_hub
 faiss-cpu
 tqdm
 tensorflow==2.13.0
+langchain_groq
