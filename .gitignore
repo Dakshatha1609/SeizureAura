@@ -1,0 +1,14 @@
+# Ignore virtual environments
+venv/
+auraenv311/
+
+# Ignore environment files
+.env
+
+# Ignore __pycache__ and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.DS_Store
+*.log
