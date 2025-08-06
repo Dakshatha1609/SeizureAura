@@ -1,4 +1,4 @@
-SeizureAura - AI Health Companion 🤖🧠
+SeizureAura - AI Health Companion 
 
 
 
