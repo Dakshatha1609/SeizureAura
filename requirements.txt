@@ -2,15 +2,16 @@ streamlit
 fastapi
 uvicorn
 requests
-
 pandas
 numpy
 tensorflow
-
-langchain-core
-langchain-groq
-langchain-openai
-langchain-google-genai
+openai
+beautifulsoup4
 python-dotenv
+tiktoken
+chromadb
 langchain==0.1.14
+langchain-openai==0.1.6
+langchain-google-genai==1.0.6
+langchain-groq==0.1.4
 
