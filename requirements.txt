@@ -1,17 +1,25 @@
+# UI and API Frameworks
 streamlit
 fastapi
 uvicorn
+
+# Core Python Libraries
 requests
 pandas
 numpy
+
+# ML/AI Libraries
 tensorflow
 openai
+tiktoken
+
+# Web and Env
 beautifulsoup4
 python-dotenv
-tiktoken
-chromadb
-langchain==0.1.14
-langchain-openai==0.1.6
-langchain-google-genai==1.0.6
-langchain-groq==0.1.4
 
+# Vector DB
+chromadb
+
+# LangChain and Groq only
+langchain==0.1.14
+langchain-groq==0.1.4
