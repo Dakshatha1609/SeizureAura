@@ -125,12 +125,19 @@ else:
                         f"Relevant Context:\n{context}\n\n"
                     )
                     if mode == "Concise":
-                        full_prompt += "Please reply in 2-3 lines using simple language."
+                       full_prompt = (
+                           f"You are a medically-aware AI assistant.\n"
+                           f"Answer concisely in 2-3 lines using simple, non-technical terms.\n\n"
+                           f"User Question: {prompt}\n\n"
+                           f"Relevant Context:\n{context}\n"
+                       )
                     else:
-                        full_prompt += (
-                            "Give a detailed explanation including causes, risks, and 2-3 lifestyle suggestions."
-                        )
-
+                       full_prompt = (
+                           f"You are a medically-aware AI assistant.\n"
+                           f"Give a detailed answer explaining possible causes, risks, and 2-3 lifestyle tips.\n\n"
+                           f"User Question: {prompt}\n\n"
+                           f"Relevant Context:\n{context}\n"
+                       )
                     reply = model.invoke([
                         SystemMessage(content="You are a helpful, medically-aware assistant."),
                         HumanMessage(content=full_prompt)
