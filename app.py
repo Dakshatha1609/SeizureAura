@@ -17,6 +17,7 @@ load_dotenv()
 from models.llm import get_chatgroq_model
 from models.embeddings import get_vectorstore_from_local
 from models.seizure_model import SeizurePredictionModel
+from utils.web_search import search_web  # ✅ <--- Add this line
 from langchain_core.messages import HumanMessage, SystemMessage
 from tensorflow.keras.models import load_model
 from keras.utils import custom_object_scope
