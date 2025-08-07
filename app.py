@@ -22,6 +22,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from tensorflow.keras.models import load_model
 from keras.utils import custom_object_scope
 import tensorflow as tf
+from keras.dtensor import DTypePolicy
 
 # Streamlit setup
 st.set_page_config(page_title="SeizureAura AI Companion", layout="centered")
@@ -63,11 +64,11 @@ if page == "Seizure Risk Prediction":
                 else:
                     data = data.reshape(1, data.shape[0], data.shape[1])
 
-                    with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel}):
+                    with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel,'DTypePolicy': DTypePolicy}):
                         model = load_model(
                             "seizure_model_cleaned.keras",
                             compile=False,
-                            custom_objects={"SeizurePredictionModel": SeizurePredictionModel}
+                            custom_objects={"SeizurePredictionModel": SeizurePredictionModel,"DTypePolicy": DTypePolicy}
                         )
                     prediction = model.predict(data)[0][0]
                     result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
