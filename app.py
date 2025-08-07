@@ -11,7 +11,10 @@ load_dotenv()
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from models.llm import get_chatgroq_model
 from models.embeddings import get_vectorstore_from_local
-from models.seizure_model import SeizurePredictionModel  #  Custom model class
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "models"))
+
+from seizure_model import SeizurePredictionModel
 
 # Keras model loading
 from tensorflow.keras.models import load_model
