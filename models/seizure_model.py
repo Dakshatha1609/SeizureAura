@@ -1,3 +1,5 @@
+# models/seizure_model.py
+
 from tensorflow.keras import layers, models
 import tensorflow as tf
 
@@ -6,10 +8,10 @@ class SeizurePredictionModel(tf.keras.Model):
         super().__init__(**kwargs)
         self.input_shape_ = input_shape
         self.cnn = models.Sequential([
-            layers.Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape),
-            layers.MaxPooling1D(pool_size=2),
-            layers.Conv1D(128, kernel_size=3, activation='relu'),
-            layers.MaxPooling1D(pool_size=2),
+            layers.Conv1D(64, 3, activation='relu', input_shape=input_shape),
+            layers.MaxPooling1D(2),
+            layers.Conv1D(128, 3, activation='relu'),
+            layers.MaxPooling1D(2),
             layers.Dropout(0.3),
         ])
         self.lstm = layers.Bidirectional(layers.LSTM(64))
