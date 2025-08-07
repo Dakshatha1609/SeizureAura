@@ -1,132 +1,118 @@
-import requests
 import streamlit as st
-import os
-import sys
 import pandas as pd
+import numpy as np
+import tensorflow as tf
+import os
 from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from models.predict import run_model 
-from models.llm import get_chatgroq_model
-from models.embeddings import get_vectorstore_from_local
-
+from langchain_core.messages import HumanMessage, SystemMessage
+from llm import get_chatgroq_model
+from embeddings import get_vectorstore_from_local
+from utils import search_web
 
 load_dotenv()
-print(" GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './model')))
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './utils')))
-from utils import answer_from_local_knowledge, search_web
-
 st.set_page_config(page_title="SeizureAura AI Companion", layout="centered")
 st.title(" SeizureAura - AI Health Companion")
 
 st.sidebar.title(" Navigation")
 page = st.sidebar.radio("Choose a page:", ["Seizure Risk Prediction", "Ask AI Chatbot"])
-if page == "Ask AI Chatbot":
-    use_rag = st.sidebar.checkbox("Use Local Knowledge (RAG)", value=True)
-    use_web = st.sidebar.checkbox("Enable Web Search Fallback", value=True)
-else:
-    use_rag = False
-    use_web = False
+use_rag = st.sidebar.checkbox("Use Local Knowledge (RAG)", value=True) if page == "Ask AI Chatbot" else False
+use_web = st.sidebar.checkbox("Enable Web Search Fallback", value=True) if page == "Ask AI Chatbot" else False
+
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model("seizure_model.keras")
+
+def preprocess_eeg(df):
+    df = df.select_dtypes(include=[np.number]).dropna()
+    data = df.values
+    if data.shape[1] > data.shape[0]:
+        data = data.T
+    if data.shape[1] > 46:
+        data = data[:, :46]
+    if data.shape[1] != 46:
+        raise ValueError(f"Model expects 46 features, found {data.shape[1]}")
+    data = data.reshape(1, data.shape[0], data.shape[1])
+    return data
 
 if page == "Seizure Risk Prediction":
-    uploaded_file = st.file_uploader(" Upload EEG File (CSV)", type=["csv"])
+    uploaded_file = st.file_uploader("Upload EEG File (CSV)", type=["csv"])
     if uploaded_file:
-        try:
-            df = pd.read_csv(uploaded_file)
-            st.success(" File uploaded and previewed below")
-            st.dataframe(df.head())
-        except Exception as e:
-            st.error(f" File Error: {e}")
+        df = pd.read_csv(uploaded_file)
+        st.dataframe(df.head())
 
-        if st.button(" Predict Seizure Risk"):
-            with st.spinner("Predicting from model..."):
-                try:
-                    res = run_model(uploaded_file)
-                    if "result" not in res:
-                        st.error("Model did not return 'result'.")
-                    else:
-                        st.success(f" Prediction: **{res['result']}**")
-                        st.write(f" Probability: `{res['probability']:.2f}`")
+        if st.button("Predict Seizure Risk"):
+            try:
+                model = load_model()
+                data = preprocess_eeg(df)
+                prediction = model.predict(data)[0][0]
+                result = "Seizure Risk" if prediction > 0.5 else "No Seizure Risk"
+                st.success(f"Prediction: **{result}**")
+                st.write(f"Probability: `{prediction:.2f}`")
 
-                        if use_rag:
-                            st.subheader(" Explanation from Local Knowledge")
-                            prompt = f"What does '{res['result']}' mean for an epilepsy patient? Give 2 suggestions."
-                            explanation = answer_from_local_knowledge(prompt)
-                        else:
-                            model = get_chatgroq_model()
-                            prompt = f"Explain what '{res['result']}' means for an epilepsy patient in simple terms. Add 2 lifestyle suggestions."
-                            explanation = model.invoke([
-                                SystemMessage(content="You are a helpful medical assistant."),
-                                HumanMessage(content=prompt)
-                            ]).content
+                model_llm = get_chatgroq_model()
+                prompt = f"What does '{result}' mean for an epilepsy patient? Suggest 2 actions."
+                if use_rag:
+                    vectorstore = get_vectorstore_from_local()
+                    context = "\n".join([doc.page_content for doc in vectorstore.similarity_search(prompt, k=2)])
+                    prompt += f"\n\nContext:\n{context}"
 
-                        st.subheader(" AI Explanation")
-                        st.info(explanation)
-                except Exception as e:
-                    st.error(f" Prediction Error: {e}")
+                response = model_llm.invoke([
+                    SystemMessage(content="You are a medical assistant."),
+                    HumanMessage(content=prompt)
+                ])
+                st.subheader("AI Explanation")
+                st.info(response.content)
+            except Exception as e:
+                st.error(f"Prediction Error: {e}")
+
 else:
-    st.subheader(" Ask About Seizures or Symptoms")
+    st.subheader("Ask About Seizures or Symptoms")
     model = get_chatgroq_model()
+
     try:
         vectorstore = get_vectorstore_from_local()
-    except Exception as e:
-        st.warning(f" Could not load knowledge base: {e}")
+    except:
         vectorstore = None
+        st.warning("Knowledge base not loaded.")
 
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Hi! I'm your AI assistant. You can ask anything about seizures, aura stages, or symptoms."}
-    ]
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hi! Ask anything about seizures, aura, or epilepsy symptoms."}
+        ]
 
-    mode = st.radio(" Response Mode", ["Concise", "Detailed"], horizontal=True)
+    mode = st.radio("Response Mode", ["Concise", "Detailed"], horizontal=True)
 
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    if prompt := st.chat_input("Ask a health question or symptom..."):
+    if prompt := st.chat_input("Ask a health question..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                try:
-                    if not vectorstore:
-                        raise ValueError("Vectorstore not loaded.")
-
+            try:
+                context = ""
+                if use_rag and vectorstore:
                     docs = vectorstore.similarity_search(prompt, k=2)
-                    if not docs:
-                        raise ValueError("No relevant documents found.")
-                    context = "\n\n".join([doc.page_content for doc in docs])
-                except Exception as e:
-                    context = ""
-                    st.warning(f"Error during RAG: {e}")
+                    context = "\n".join([doc.page_content for doc in docs]) if docs else ""
+                elif use_web:
+                    context = search_web(prompt)
 
-                try:
-                    if not context and use_web:
-                        web_context = search_web(prompt)
-                        context = web_context if web_context else "No reliable web data found."
+                final_prompt = (
+                    f"You are a helpful health assistant.\n\n"
+                    f"User question: {prompt}\n\n"
+                    f"Relevant context:\n{context}\n\n"
+                    f"Please respond {'in 2-3 lines' if mode == 'Concise' else 'with examples and medical insights.'}"
+                )
 
-                    formatted_prompt = (
-                        f"You are a medically aware health chatbot for epilepsy patients. "
-                        f"Below is a user question followed by context from medical knowledge.\n\n"
-                        f"User Question: {prompt}\n\n"
-                        f"Relevant Context:\n{context}\n\n"
-                    )
+                reply = model.invoke([
+                    SystemMessage(content="You are a medically aware AI chatbot."),
+                    HumanMessage(content=final_prompt)
+                ]).content
+            except Exception as e:
+                reply = f"Error: {e}"
 
-                    if mode == "Concise":
-                        formatted_prompt += "Please respond concisely in 2-3 lines."
-                    else:
-                        formatted_prompt += "Please explain in detail with examples and medical facts."
-
-                    reply = model.invoke([
-                        SystemMessage(content="You are a friendly and medically-aware AI chatbot."),
-                        HumanMessage(content=formatted_prompt)
-                    ]).content
-                except Exception as e:
-                    reply = f"Sorry, I encountered an error: {e}"
-
-                st.markdown(reply)
-                st.session_state.messages.append({"role": "assistant", "content": reply})
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
