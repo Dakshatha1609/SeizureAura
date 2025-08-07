@@ -27,7 +27,7 @@ if page == "Ask AI Chatbot":
     use_web = st.sidebar.checkbox("Enable Web Search Fallback", value=True)
 
 # Register and Define Custom Model
-@register_keras_serializable()
+@register_keras_serializable(package="Custom")
 class SeizurePredictionModel(models.Model):
     def __init__(self, input_shape=None, **kwargs):
         super(SeizurePredictionModel, self).__init__(**kwargs)
