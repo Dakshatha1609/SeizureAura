@@ -64,7 +64,11 @@ if page == "Seizure Risk Prediction":
 
                     # Load model using custom scope
                     with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel}):
-                        model = load_model("seizure_model_cleaned.keras", compile=False)
+                        model = load_model(
+    "seizure_model_cleaned.keras",
+    compile=False,
+    custom_objects={"SeizurePredictionModel": SeizurePredictionModel}
+)
                     prediction = model.predict(data)[0][0]
                     result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
                     st.success(f"**Prediction:** {result}")
