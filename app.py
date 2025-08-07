@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import sys
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -12,8 +13,8 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from models.llm import get_chatgroq_model
 from models.embeddings import get_vectorstore_from_local
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "models"))
-
+current_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
+sys.path.append(os.path.join(current_dir, "models"))
 from seizure_model import SeizurePredictionModel
 
 # Keras model loading
