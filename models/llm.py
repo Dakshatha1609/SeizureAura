@@ -5,4 +5,4 @@ from config.config import GROQ_API_KEY
 
 def get_chatgroq_model():
     """Initialize and return the Groq chat model"""
-    return ChatGroq(api_key=GROQ_API_KEY, model="mixtral-8x22b")
+    return ChatGroq(api_key=GROQ_API_KEY, model="llama3-8b-8192")
