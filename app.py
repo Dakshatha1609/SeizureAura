@@ -62,13 +62,12 @@ if page == "Seizure Risk Prediction":
                 else:
                     data = data.reshape(1, data.shape[0], data.shape[1])
 
-                    # Load model using custom scope
                     with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel}):
                         model = load_model(
-    "seizure_model_cleaned.keras",
-    compile=False,
-    custom_objects={"SeizurePredictionModel": SeizurePredictionModel}
-)
+                            "seizure_model_cleaned.keras",
+                            compile=False,
+                            custom_objects={"SeizurePredictionModel": SeizurePredictionModel}
+                        )
                     prediction = model.predict(data)[0][0]
                     result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
                     st.success(f"**Prediction:** {result}")
@@ -115,35 +114,38 @@ else:
             with st.spinner("Thinking..."):
                 try:
                     context = ""
+                    context_source = ""
                     if use_rag and vectorstore:
                         docs = vectorstore.similarity_search(prompt, k=2)
                         context = "\n\n".join([doc.page_content for doc in docs])
+                        context_source = "Based on the local medical knowledge base, here's what I found."
                     elif use_web:
                         from utils.search_web import search_web
                         context = search_web(prompt) or ""
-
-                    # Prompt formatting
-                    full_prompt = (
-                        f"You are a medically aware chatbot for epilepsy patients.\n\n"
-                        f"User Question: {prompt}\n\n"
-                        f"Relevant Context:\n{context}\n\n"
-                    )
-                    if mode == "Concise":
-                       full_prompt = (
-                           f"You are a medically-aware AI assistant.\n"
-                           f"Answer concisely in 2-3 lines using simple, non-technical terms.\n\n"
-                           f"User Question: {prompt}\n\n"
-                           f"Relevant Context:\n{context}\n"
-                       )
+                        context_source = "Based on recent information found online, here's what I found."
                     else:
-                       full_prompt = (
-                           f"You are a medically-aware AI assistant.\n"
-                           f"Give a detailed answer explaining possible causes, risks, and 2-3 lifestyle tips.\n\n"
-                           f"User Question: {prompt}\n\n"
-                           f"Relevant Context:\n{context}\n"
-                       )
+                        context = ""
+                        context_source = "Answering from general medical knowledge."
+
+                    if mode == "Concise":
+                        system_message = "You are a concise, medically-aware assistant. Respond in 2-3 lines using simple, easy-to-understand language."
+                        full_prompt = (
+                            f"{context_source}\n\n"
+                            f"User Question: {prompt}\n\n"
+                            f"Context:\n{context}\n\n"
+                            f"Please give a short, clear answer using layman-friendly terms."
+                        )
+                    else:
+                        system_message = "You are a detailed, medically-aware assistant. Respond with causes, risks, and practical tips while staying understandable."
+                        full_prompt = (
+                            f"{context_source}\n\n"
+                            f"User Question: {prompt}\n\n"
+                            f"Context:\n{context}\n\n"
+                            f"Give a complete explanation with 2-3 practical lifestyle tips or suggestions."
+                        )
+
                     reply = model.invoke([
-                        SystemMessage(content="You are a helpful, medically-aware assistant."),
+                        SystemMessage(content=system_message),
                         HumanMessage(content=full_prompt)
                     ]).content
 
@@ -152,4 +154,3 @@ else:
 
                 st.markdown(reply)
                 st.session_state.messages.append({"role": "assistant", "content": reply})
-
