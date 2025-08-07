@@ -17,7 +17,7 @@ load_dotenv()
 from models.llm import get_chatgroq_model
 from models.embeddings import get_vectorstore_from_local
 from models.seizure_model import SeizurePredictionModel
-from utils.web_search import search_web  # ✅ <--- Add this line
+from utils.web_search import search_web
 from langchain_core.messages import HumanMessage, SystemMessage
 from tensorflow.keras.models import load_model
 from keras.utils import custom_object_scope
@@ -121,7 +121,6 @@ else:
                         context = "\n\n".join([doc.page_content for doc in docs])
                         context_source = "Based on the local medical knowledge base, here's what I found."
                     elif use_web:
-                        from utils.search_web import search_web
                         context = search_web(prompt) or ""
                         context_source = "Based on recent information found online, here's what I found."
                     else:
