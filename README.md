@@ -26,8 +26,6 @@ Tech Stack
 
 \- Frontend: Streamlit
 
-\- Backend: FastAPI
-
 \- Model: TensorFlow CNN + BiLSTM
 
 \- RAG: LangChain + HuggingFace + FAISS
@@ -45,8 +43,6 @@ Folder Structure
 AI\_UseCase/
 
 ├── app.py # Streamlit frontend
-
-├── backend.py # FastAPI backend
 
 ├── models/
 
