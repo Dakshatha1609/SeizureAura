@@ -53,7 +53,8 @@ if page == "Seizure Risk Prediction":
                 if data.shape[1] > 46:
                     data = data[:, :46]
                 if data.shape[1] != 46:
-                    st.error(f Expected 46 features, found {data.shape[1]}")
+                    st.error(f"Expected 46 features, found {data.shape[1]}")
+
                 else:
                     data = data.reshape(1, data.shape[0], data.shape[1])
                     from tensorflow.keras.models import load_model
@@ -70,7 +71,7 @@ if page == "Seizure Risk Prediction":
 # CHATBOT SECTION
 # -----------------------------------------
 else:
-    st.subheader("💬 Ask About Seizures, Aura, or Symptoms")
+    st.subheader(" Ask About Seizures, Aura, or Symptoms")
     try:
         model = get_chatgroq_model()
     except Exception as e:
