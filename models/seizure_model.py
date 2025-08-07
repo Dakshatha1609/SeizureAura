@@ -1,8 +1,6 @@
 from tensorflow.keras import layers, models
 import tensorflow as tf
-from keras.utils import register_keras_serializable
 
-@register_keras_serializable(package="Custom", name="SeizurePredictionModel")
 class SeizurePredictionModel(tf.keras.Model):
     def __init__(self, input_shape=None, **kwargs):
         super().__init__(**kwargs)
