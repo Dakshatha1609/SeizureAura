@@ -22,7 +22,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from tensorflow.keras.models import load_model
 from keras.utils import custom_object_scope
 import tensorflow as tf
-from keras.dtensor import DTypePolicy
+
 
 # Streamlit setup
 st.set_page_config(page_title="SeizureAura AI Companion", layout="centered")
