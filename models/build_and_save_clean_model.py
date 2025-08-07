@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 from tensorflow.keras import layers, models
-import os
+import numpy as np
 
 class SeizurePredictionModel(tf.keras.Model):
     def __init__(self, input_shape=(500, 46), **kwargs):
@@ -34,9 +34,13 @@ class SeizurePredictionModel(tf.keras.Model):
     def from_config(cls, config):
         return cls(**config)
 
-# Build and save a clean model
+# Initialize model
 model = SeizurePredictionModel()
-model.build(input_shape=(None, 500, 46))
-model.save("seizure_model_cleaned.keras", include_optimizer=False)
 
-print("Clean model saved as 'seizure_model_cleaned.keras'")
+# Build by calling once with dummy input (to initialize weights)
+dummy_input = np.random.rand(1, 500, 46).astype(np.float32)
+model(dummy_input)
+
+# Save the model with initialized weights
+model.save("seizure_model_cleaned.keras", include_optimizer=False)
+print("Cleaned model with weights saved as 'seizure_model_cleaned.keras'")
