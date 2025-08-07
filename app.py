@@ -7,13 +7,13 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from models.predict import run_model 
 from models.llm import get_chatgroq_model
+from models.embeddings import get_vectorstore_from_local
 
 
 load_dotenv()
 print(" GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './model')))
-from embeddings import get_vectorstore_from_local
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), './utils')))
 from utils import answer_from_local_knowledge, search_web
