@@ -63,12 +63,8 @@ if page == "Seizure Risk Prediction":
                     data = data.reshape(1, data.shape[0], data.shape[1])
 
                     # Load model using custom scope
-                    with custom_object_scope({
-    "SeizurePredictionModel": SeizurePredictionModel,
-    "DTypePolicy": tf.keras.mixed_precision.Policy
-}):
-                         model = load_model("seizure_model_final.keras", custom_objects={"SeizurePredictionModel": SeizurePredictionModel})
-
+                    with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel}):
+                        model = load_model("seizure_model_clean.keras", compile=False)
                     prediction = model.predict(data)[0][0]
                     result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
                     st.success(f"**Prediction:** {result}")
