@@ -5,26 +5,24 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Langchain LLM & Vectorstore
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from models.llm import get_chatgroq_model
 from models.embeddings import get_vectorstore_from_local
 
 current_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
-sys.path.append(os.path.join(current_dir, "models"))
-from seizure_model import SeizurePredictionModel
+models_path = os.path.join(current_dir, "models")
+if models_path not in sys.path:
+    sys.path.append(models_path)
 
-# Keras model loading
+from seizure_model import SeizurePredictionModel  
 from tensorflow.keras.models import load_model
 
-# App Config
+# Load environment variables
+load_dotenv()
+
 st.set_page_config(page_title="SeizureAura AI Companion", layout="centered")
 st.title(" SeizureAura - AI Health Companion")
 
-# Navigation
 st.sidebar.title(" Navigation")
 page = st.sidebar.radio("Choose a page:", ["Seizure Risk Prediction", "Ask AI Chatbot"])
 
@@ -33,12 +31,9 @@ if page == "Ask AI Chatbot":
     use_rag = st.sidebar.checkbox("Use Local Knowledge (RAG)", value=True)
     use_web = st.sidebar.checkbox("Enable Web Search Fallback", value=True)
 
-# ─────────────────────────────────────────
-#  Seizure Risk Prediction Page
-# ─────────────────────────────────────────
+# Seizure Risk Prediction Page
 if page == "Seizure Risk Prediction":
     uploaded_file = st.file_uploader(" Upload EEG File (CSV)", type=["csv"])
-    
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
@@ -55,18 +50,13 @@ if page == "Seizure Risk Prediction":
 
                     if data.shape[1] > data.shape[0]:
                         data = data.T
-
                     if data.shape[1] > 46:
                         data = data[:, :46]
-
                     if data.shape[1] != 46:
                         st.error(f"Model expects 46 features, found {data.shape[1]}")
                     else:
                         data = data.reshape(1, data.shape[0], data.shape[1])
-
-                        model = load_model("seizure_model.keras", 
-                                           custom_objects={"SeizurePredictionModel": SeizurePredictionModel})
-
+                        model = load_model("seizure_model.keras", custom_objects={"SeizurePredictionModel": SeizurePredictionModel})
                         prediction = model.predict(data)[0][0]
                         result = "Seizure Risk" if prediction > 0.5 else "No Seizure Risk"
                         st.success(f"Prediction: **{result}**")
@@ -74,13 +64,10 @@ if page == "Seizure Risk Prediction":
                 except Exception as e:
                     st.error(f"Prediction error: {e}")
 
-# ─────────────────────────────────────────
-# Chatbot Page
-# ─────────────────────────────────────────
+# AI Chatbot Page
 else:
     st.subheader(" Ask About Seizures or Symptoms")
     model = get_chatgroq_model()
-
     try:
         vectorstore = get_vectorstore_from_local()
     except Exception as e:
@@ -110,25 +97,26 @@ else:
                     if vectorstore:
                         docs = vectorstore.similarity_search(prompt, k=2)
                         context = "\n\n".join([doc.page_content for doc in docs])
-
                     formatted_prompt = (
-                        f"You are a medically aware chatbot for epilepsy patients.\n\n"
-                        f"User Question: {prompt}\n\n"
-                        f"Relevant Context: {context}\n\n"
+                        f"You are a medically aware chatbot for epilepsy patients.\n"
+                        f"User Question: {prompt}\n"
+                        f"Relevant Context: {context}\n"
                     )
-
                     if mode == "Concise":
-                        formatted_prompt += "Answer briefly in 2-3 lines using simple language."
+                        formatted_prompt += (
+                            "\n\nYou must answer in **2-3 lines max** using simple, layman terms. "
+                            "Avoid medical jargon. Don't elaborate unless necessary."
+                        )
                     else:
                         formatted_prompt += (
-                            "Explain in detail using medical knowledge, symptoms, risk, causes, and 2-3 lifestyle suggestions."
+                            "\n\nGive a **detailed medical explanation**. Include possible causes, symptoms, risks, "
+                            "and 2-3 lifestyle suggestions with examples. Use medical terminology where relevant."
                         )
 
                     reply = model.invoke([
                         SystemMessage(content="You are a friendly and medically-aware AI chatbot."),
                         HumanMessage(content=formatted_prompt)
                     ]).content
-
                 except Exception as e:
                     reply = f"Sorry, I encountered an error: {e}"
 
