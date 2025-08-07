@@ -36,37 +36,6 @@ Tech Stack
 
 
 
-Folder Structure
-
-
-
-AI\_UseCase/
-
-├── app.py # Streamlit frontend
-
-├── models/
-
-│ ├── llm.py # GROQ model loader
-
-│ └── embeddings.py # FAISS + RAG
-
-├── utils/
-
-│ ├── utils.py # RAG logic
-
-│ └── web\_search.py # Web search fallback
-
-├── data/
-
-│ └── epilepsy\_knowledgebase.txt
-
-├── .env # Contains GROQ\_API\_KEY
-
-├── requirements.txt # All dependencies
-
-└── README.md # This file
-
-
 
 Setup Instructions
 
@@ -102,17 +71,6 @@ Links
 
 \- GitHub Repo: \[https://github.com/Dakshatha1609/SeizureAura](https://github.com/Dakshatha1609/SeizureAura)
 
-\- Live Streamlit App: \[your Streamlit link here]
-
-
-
-Screenshots
-
-
-
-> \_You can add UI screenshots here once deployed.\_
-
-> \_Example: prediction screen, chatbot responses, toggle UI, etc.\_
-
+\- Live Streamlit App: \[https://seizureaura-ahnwdcwpa3mda9nt6zesfa.streamlit.app/]
 
 
