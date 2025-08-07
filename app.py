@@ -5,7 +5,7 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Include necessary folders in sys.path
+# Add folders to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "models"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "utils"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "config"))
@@ -13,13 +13,15 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "config"))
 # Load environment variables
 load_dotenv()
 
-# Import custom modules
+# Imports
 from models.llm import get_chatgroq_model
 from models.embeddings import get_vectorstore_from_local
 from models.seizure_model import SeizurePredictionModel
 from langchain_core.messages import HumanMessage, SystemMessage
+from tensorflow.keras.models import load_model
+from keras.utils import custom_object_scope
 
-# Streamlit UI
+# Streamlit setup
 st.set_page_config(page_title="SeizureAura AI Companion", layout="centered")
 st.title(" SeizureAura - AI Health Companion")
 
@@ -31,47 +33,52 @@ if page == "Ask AI Chatbot":
     use_rag = st.sidebar.checkbox("Use Local Knowledge (RAG)", value=True)
     use_web = st.sidebar.checkbox("Enable Web Search Fallback", value=True)
 
-# -----------------------------------------
-# SEIZURE PREDICTION SECTION
-# -----------------------------------------
+# ---------------------------------------------------
+# SEIZURE RISK PREDICTION
+# ---------------------------------------------------
 if page == "Seizure Risk Prediction":
     uploaded_file = st.file_uploader("Upload EEG CSV File", type=["csv"])
+    
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
-            st.success(" File uploaded successfully.")
+            st.success("File uploaded successfully.")
             st.dataframe(df.head())
         except Exception as e:
-            st.error(f" Error reading file: {e}")
+            st.error(f"Error reading file: {e}")
 
         if st.button("Predict Seizure Risk"):
             try:
                 df = df.select_dtypes(include=[np.number]).dropna()
                 data = df.values
+
                 if data.shape[1] > data.shape[0]:
                     data = data.T
                 if data.shape[1] > 46:
                     data = data[:, :46]
                 if data.shape[1] != 46:
                     st.error(f"Expected 46 features, found {data.shape[1]}")
-
                 else:
                     data = data.reshape(1, data.shape[0], data.shape[1])
-                    from tensorflow.keras.models import load_model
-                    model = load_model("seizure_model.keras", compile=False,
-                                       custom_objects={"SeizurePredictionModel": SeizurePredictionModel})
-                    prediction = model.predict(data)[0][0]
-                    result = "Seizure Risk" if prediction > 0.5 else "No Seizure Risk"
-                    st.success(f" Prediction: **{result}**")
-                    st.write(f" Probability: `{prediction:.2f}`")
-            except Exception as e:
-                st.error(f" Prediction error: {e}")
 
-# -----------------------------------------
-# CHATBOT SECTION
-# -----------------------------------------
+                    # Load model using custom scope
+                    with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel}):
+                        model = load_model("seizure_model_cleaned.keras", compile=False)
+
+                    prediction = model.predict(data)[0][0]
+                    result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
+                    st.success(f"**Prediction:** {result}")
+                    st.write(f"**Probability:** `{prediction:.2f}`")
+
+            except Exception as e:
+                st.error(f"Prediction error: {e}")
+
+# ---------------------------------------------------
+# AI CHATBOT SECTION
+# ---------------------------------------------------
 else:
     st.subheader(" Ask About Seizures, Aura, or Symptoms")
+
     try:
         model = get_chatgroq_model()
     except Exception as e:
@@ -107,19 +114,18 @@ else:
                     if use_rag and vectorstore:
                         docs = vectorstore.similarity_search(prompt, k=2)
                         context = "\n\n".join([doc.page_content for doc in docs])
-
                     elif use_web:
                         from utils.search_web import search_web
                         context = search_web(prompt) or ""
 
-                    # Construct the prompt
+                    # Prompt formatting
                     full_prompt = (
                         f"You are a medically aware chatbot for epilepsy patients.\n\n"
                         f"User Question: {prompt}\n\n"
                         f"Relevant Context:\n{context}\n\n"
                     )
                     if mode == "Concise":
-                        full_prompt += "Please reply in 2-3 lines with simple terms."
+                        full_prompt += "Please reply in 2-3 lines using simple language."
                     else:
                         full_prompt += (
                             "Give a detailed explanation including causes, risks, and 2-3 lifestyle suggestions."
@@ -135,3 +141,4 @@ else:
 
                 st.markdown(reply)
                 st.session_state.messages.append({"role": "assistant", "content": reply})
+
