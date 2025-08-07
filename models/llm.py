@@ -1,17 +1,12 @@
-from langchain_groq import ChatGroq
-from config.config import GROQ_API_KEY
+from langchain.vectorstores import FAISS
+from langchain.embeddings import HuggingFaceEmbeddings
+import os
 
-def get_chatgroq_model():
-    """Initialize and return the Groq chat model"""
-    try:
-        if not GROQ_API_KEY:
-            raise ValueError("GROQ_API_KEY not found in environment")
+def get_vectorstore_from_local():
+    persist_directory = "vectorstore"  # or whatever folder you're using
+    if not os.path.exists(persist_directory):
+        raise FileNotFoundError(f"Vectorstore directory '{persist_directory}' not found.")
 
-        groq_model = ChatGroq(
-            api_key=GROQ_API_KEY,
-            model="llama3-8b-8192"
-        )
-        return groq_model
-
-    except Exception as e:
-        raise RuntimeError(f"Failed to initialize Groq model: {str(e)}")
+    embedding = HuggingFaceEmbeddings()
+    vectordb = FAISS.load_local(persist_directory, embedding, allow_dangerous_deserialization=True)
+    return vectordb

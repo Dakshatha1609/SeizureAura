@@ -4,7 +4,8 @@ import numpy as np
 import os
 import sys
 from dotenv import load_dotenv
-
+from models.seizure_model import SeizurePredictionModel  
+from tensorflow.keras.models import load_model
 from langchain_core.messages import HumanMessage, SystemMessage
 from models.llm import get_chatgroq_model
 from models.embeddings import get_vectorstore_from_local
@@ -13,9 +14,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in global
 models_path = os.path.join(current_dir, "models")
 if models_path not in sys.path:
     sys.path.append(models_path)
-
-from models.seizure_model import SeizurePredictionModel  
-from tensorflow.keras.models import load_model
 
 # Load environment variables
 load_dotenv()
