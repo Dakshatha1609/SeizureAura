@@ -20,6 +20,7 @@ from models.seizure_model import SeizurePredictionModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from tensorflow.keras.models import load_model
 from keras.utils import custom_object_scope
+import tensorflow as tf
 
 # Streamlit setup
 st.set_page_config(page_title="SeizureAura AI Companion", layout="centered")
@@ -62,8 +63,11 @@ if page == "Seizure Risk Prediction":
                     data = data.reshape(1, data.shape[0], data.shape[1])
 
                     # Load model using custom scope
-                    with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel}):
-                        model = load_model("seizure_model_cleaned.keras", compile=False)
+                    with custom_object_scope({
+    "SeizurePredictionModel": SeizurePredictionModel,
+    "DTypePolicy": tf.keras.mixed_precision.Policy
+}):
+                         model = load_model("seizure_model_cleaned.keras")
 
                     prediction = model.predict(data)[0][0]
                     result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
