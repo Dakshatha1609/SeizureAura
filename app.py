@@ -67,7 +67,7 @@ if page == "Seizure Risk Prediction":
     "SeizurePredictionModel": SeizurePredictionModel,
     "DTypePolicy": tf.keras.mixed_precision.Policy
 }):
-                         model = load_model("seizure_model_final.keras", custom_objects={"SeizurePredictionModel": SeizurePredictionModel)
+                         model = load_model("seizure_model_final.keras", custom_objects={"SeizurePredictionModel": SeizurePredictionModel})
 
                     prediction = model.predict(data)[0][0]
                     result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
