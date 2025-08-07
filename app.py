@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from tensorflow.keras.models import load_model
 from tensorflow.keras import layers, models
 import tensorflow as tf
-from keras.saving import register_keras_serializable
+from tensorflow.keras.saving import register_keras_serializable 
+
 
 # Load environment variables
 load_dotenv()
