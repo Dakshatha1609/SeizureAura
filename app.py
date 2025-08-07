@@ -22,6 +22,9 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from tensorflow.keras.models import load_model
 from keras.utils import custom_object_scope
 import tensorflow as tf
+from keras.utils import custom_object_scope
+from tensorflow.keras.models import load_model
+from models.seizure_model import SeizurePredictionModel
 
 
 # Streamlit setup
@@ -67,8 +70,7 @@ if page == "Seizure Risk Prediction":
                     with custom_object_scope({'SeizurePredictionModel': SeizurePredictionModel}):
                         model = load_model(
                             "seizure_model_cleaned.keras",
-                            compile=False,
-                            custom_objects={"SeizurePredictionModel": SeizurePredictionModel}
+                            compile=False
                         )
                     prediction = model.predict(data)[0][0]
                     result = " Seizure Risk" if prediction > 0.5 else " No Seizure Risk"
