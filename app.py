@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -23,7 +22,7 @@ if page == "Ask AI Chatbot":
     use_rag = st.sidebar.checkbox("Use Local Knowledge (RAG)", value=True)
     use_web = st.sidebar.checkbox("Enable Web Search Fallback", value=True)
 
-# Seizure Risk Prediction Logic (Model loaded directly here)
+# Seizure Risk Prediction Logic
 if page == "Seizure Risk Prediction":
     uploaded_file = st.file_uploader(" Upload EEG File (CSV)", type=["csv"])
     if uploaded_file:
@@ -89,15 +88,24 @@ else:
                     if vectorstore:
                         docs = vectorstore.similarity_search(prompt, k=2)
                         context = "\n\n".join([doc.page_content for doc in docs])
+
                     formatted_prompt = (
                         f"You are a medically aware chatbot for epilepsy patients.\n"
                         f"User Question: {prompt}\n"
                         f"Relevant Context: {context}\n"
                     )
+
                     if mode == "Concise":
-                        formatted_prompt += "Please respond concisely in 2-3 lines."
+                        formatted_prompt += (
+                            "\n\nYou must answer in **2-3 lines max** using simple, layman terms. "
+                            "Avoid medical jargon. Don't elaborate unless necessary."
+                        )
                     else:
-                        formatted_prompt += "Please explain in detail with examples and medical facts."
+                        formatted_prompt += (
+                            "\n\nGive a **detailed medical explanation**. Include possible causes, symptoms, risks, "
+                            "and 2-3 lifestyle suggestions with examples. Use medical terminology where relevant."
+                        )
+
                     reply = model.invoke([
                         SystemMessage(content="You are a friendly and medically-aware AI chatbot."),
                         HumanMessage(content=formatted_prompt)
