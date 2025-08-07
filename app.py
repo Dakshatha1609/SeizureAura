@@ -14,7 +14,7 @@ models_path = os.path.join(current_dir, "models")
 if models_path not in sys.path:
     sys.path.append(models_path)
 
-from seizure_model import SeizurePredictionModel  
+from models.seizure_model import SeizurePredictionModel  
 from tensorflow.keras.models import load_model
 
 # Load environment variables
