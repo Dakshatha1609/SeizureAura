@@ -1,13 +1,16 @@
-# models/build_clean_model.py
+# models/build_and_save_clean_model.py
 
-import tensorflow as tf
 from seizure_model import SeizurePredictionModel
+import numpy as np
+import tensorflow as tf
 
-input_shape = (500, 46)
+# Simulate dummy input data to build model
+dummy_input = np.random.rand(1, 500, 46).astype(np.float32)
 
-model = SeizurePredictionModel(input_shape=input_shape)
-model.build(input_shape=(None, *input_shape))
+# Build model
+model = SeizurePredictionModel(input_shape=(500, 46))
+model(dummy_input)  # Force build
 
-# Save without optimizer/dtype
-model.save("seizure_model_clean.keras", include_optimizer=False)
-print(" Clean model saved as seizure_model_clean.keras")
+# Save clean model
+model.save("seizure_model_cleaned.keras", include_optimizer=False)
+print(" Cleaned model saved successfully as 'seizure_model_cleaned.keras'")
